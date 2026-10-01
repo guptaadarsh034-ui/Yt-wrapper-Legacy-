@@ -1,6 +1,7 @@
 package com.yt.wrapper;
 
 import android.app.Activity;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
 import android.view.WindowManager;
@@ -17,7 +18,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 1. Force GPU Hardware Acceleration at Window level
+        // --- HARDWARE ACCELERATION STEP 1: Window Level GPU Rendering ---
         getWindow().setFlags(
             WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
@@ -26,13 +27,15 @@ public class MainActivity extends Activity {
         webView = new WebView(this);
         setContentView(webView);
 
-        // 2. Hardware Layering for 60fps GPU rendering
-        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        // --- HARDWARE ACCELERATION STEP 2: View Level GPU Layer ---
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        }
+
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
 
         WebSettings settings = webView.getSettings();
         
-        // Critical WebView settings
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
         
@@ -40,41 +43,34 @@ public class MainActivity extends Activity {
         settings.setAppCacheEnabled(false);
         settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setDatabaseEnabled(false);
-        settings.setGeolocationEnabled(false);
         
-        // Prioritize rendering speed
+        // --- HARDWARE ACCELERATION STEP 3: Media & Render Prioritization ---
         settings.setRenderPriority(WebSettings.RenderPriority.HIGH);
-        settings.setLoadsImagesAutomatically(true);
-        settings.setBlockNetworkImage(false);
+        settings.setPluginState(WebSettings.PluginState.ON);
+        
+        // Force desktop/mobile layout hardware viewport
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
 
-        // Custom User Agent: Spoofs classic Chrome Mobile (Bypasses heavy Desktop/Polymer JS)
+        // KitKat-optimized User Agent (serves lightweight UI that GPUs can composite fast)
         settings.setUserAgentString("Mozilla/5.0 (Linux; U; Android 4.4.2; en-us; LGMS323 Build/KOT49I.MS32310c) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/30.0.0.0 Mobile Safari/537.36");
 
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // Keep all navigations internal
                 view.loadUrl(url);
                 return true;
             }
+        });
 
+        // --- HARDWARE ACCELERATION STEP 4: Full WebChromeClient for GPU Video Decoding ---
+        webView.setWebChromeClient(new WebChromeClient() {
             @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                
-                // Inject custom JS/CSS into m.youtube.com to kill heavy scripts and ads
-                String jsOptimizations = "javascript:(function() {" +
-                    "var style = document.createElement('style');" +
-                    "style.innerHTML = 'ytm-promoted-sparkles-web-renderer, ytm-compact-promoted-item-renderer, ytm-companion-ad-renderer { display: none !important; }';" +
-                    "document.head.appendChild(style);" +
-                    "})()";
-                view.loadUrl(jsOptimizations);
+            public View getVideoLoadingProgressView() {
+                return super.getVideoLoadingProgressView();
             }
         });
 
-        webView.setWebChromeClient(new WebChromeClient());
-
-        // Load official mobile YouTube directly
         webView.loadUrl("https://m.youtube.com");
     }
 
@@ -83,6 +79,7 @@ public class MainActivity extends Activity {
         super.onPause();
         if (webView != null) {
             webView.onPause();
+            webView.pauseTimers();
         }
     }
 
@@ -91,6 +88,7 @@ public class MainActivity extends Activity {
         super.onResume();
         if (webView != null) {
             webView.onResume();
+            webView.resumeTimers();
         }
     }
 
