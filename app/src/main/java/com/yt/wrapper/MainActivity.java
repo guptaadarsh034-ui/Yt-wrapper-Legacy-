@@ -16,7 +16,7 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Hardware acceleration force for 60fps UI
+        // Hardware acceleration for smooth 60fps UI
         getWindow().setFlags(
             android.view.WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             android.view.WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
@@ -26,22 +26,32 @@ public class MainActivity extends Activity {
         setContentView(webView);
 
         WebSettings settings = webView.getSettings();
+        
+        // Essential WebApp features
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
         
-        // Disable heavy caching to conserve 512MB RAM
-        settings.setAppCacheEnabled(false);
-        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        
-        // Lightweight mobile user agent to bypass heavy YouTube scripts
-        settings.setUserAgentString("Mozilla/5.0 (Linux; Android 4.4.2; Nexus 4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/34.0.1847.114 Mobile Safari/537.36");
+        // Force viewports to render like an app
+        settings.setUseWideViewPort(true);
+        settings.setLoadWithOverviewMode(true);
 
-        webView.setWebViewClient(new WebViewClient());
+        // Modern Mobile User Agent to force YouTube mobile web app interface
+        settings.setUserAgentString("Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36");
+
+        // Keep all link navigation inside the wrapper
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                view.loadUrl(url);
+                return true;
+            }
+        });
+
         webView.setWebChromeClient(new WebChromeClient());
 
-        // Using Invidious frontend for ultra-smooth non-laggy playback on 512MB RAM
-        // (You can change this to "https://m.youtube.com" or "https://piped.video")
-        webView.loadUrl("https://yewtu.be");
+        // Load YouTube Mobile
+        webView.loadUrl("https://m.youtube.com");
     }
 
     @Override
