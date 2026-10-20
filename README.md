@@ -2,20 +2,20 @@
 
 A small Android WebView wrapper intended for Android 4.4 (API 19) devices, including low-memory phones. This is an experimental compatibility project, not a port of Google's proprietary YouTube APK.
 
-## Current approach
+## Smoothness and low-memory tuning
 
-- Minimum Android version: API 19 (Android 4.4).
-- Java-only app with no third-party runtime libraries.
-- Uses the device's built-in WebView and hardware acceleration where supported.
-- Keeps DOM storage enabled because mobile websites may rely on it; disables the WebView database API.
-- Uses normal WebView caching rather than clearing cache on every launch.
-- Avoids requesting `largeHeap` and avoids forcing an extra hardware layer.
+- Hardware acceleration is enabled at both application and activity level in the manifest.
+- Does not force a separate hardware layer for the WebView; extra off-screen textures can increase graphics-memory pressure on 512 MB devices.
+- Hides scrollbars and disables overscroll effects to reduce visual clutter and edge-effect work.
+- Disables the WebView drawing cache and avoids extra runtime libraries.
+- Uses the normal WebView cache; does not clear it on every launch.
+- Uses the API 19 WebView render-priority hint where supported. Newer WebView implementations may ignore this deprecated hint.
+- Does not request `largeHeap`; it keeps DOM storage for site compatibility and disables the legacy WebView database API.
 - Handles back navigation, pause/resume, state restoration, and WebView cleanup.
-- GitHub Actions builds a debug APK and uploads it as an artifact.
 
 ## Important limitations
 
-Modern YouTube may not work reliably in Android 4.4's old WebView. Sign-in, video playback, codecs, TLS support, and website compatibility depend on the device firmware and YouTube's current website. Smooth playback or a specific RAM footprint cannot be guaranteed without testing on the target device. The app does not currently implement a separate Invidious backend.
+Modern YouTube may not work reliably in Android 4.4's old WebView. Sign-in, video playback, codecs, TLS support, website compatibility, and frame rate depend on device firmware, GPU drivers, memory pressure, and YouTube's current website. These settings are tuning, not a guarantee of a specific frame rate or RAM footprint; real-device testing is required. The app does not currently implement a separate Invidious backend.
 
 ## Build
 
