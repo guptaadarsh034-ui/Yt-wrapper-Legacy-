@@ -1,35 +1,24 @@
 # YT Legacy Wrapper
 
-A lightweight, high-performance YouTube wrapper built specifically for **Android 4.4 (KitKat)** devices with **512 MB RAM**.
+A small Android WebView wrapper intended for Android 4.4 (API 19) devices, including low-memory phones. This is an experimental compatibility project, not a port of Google's proprietary YouTube APK.
 
-Modern YouTube apps and standard WebViews cause severe frame drops, stuttering, and Out-Of-Memory (OOM) crashes on low-spec legacy hardware. **YT Legacy Wrapper** addresses this by using a stripped-down client rendering loop, hardware-accelerated WebKit views, and aggressive RAM management to deliver a smooth, 60fps playback experience reminiscent of YouTube on legacy systems.
+## Current approach
 
----
+- Minimum Android version: API 19 (Android 4.4).
+- Java-only app with no third-party runtime libraries.
+- Uses the device's built-in WebView and hardware acceleration where supported.
+- Keeps DOM storage enabled because mobile websites may rely on it; disables the WebView database API.
+- Uses normal WebView caching rather than clearing cache on every launch.
+- Avoids requesting `largeHeap` and avoids forcing an extra hardware layer.
+- Handles back navigation, pause/resume, state restoration, and WebView cleanup.
+- GitHub Actions builds a debug APK and uploads it as an artifact.
 
-## 🌟 Key Features
+## Important limitations
 
-* **Low RAM Footprint:** Operates strictly within **~50MB – 80MB of RAM** (designed specifically for 512MB RAM constraints).
-* **Hardware Accelerated:** Forces GPU-based WebKit rendering for smooth UI transitions and scrolling.
-* **Auto Build via GitHub Actions:** Compiles and generates the APK automatically every time you push code.
-* **Zero Google Play Services Dependency:** Runs smoothly on AOSP, custom ROMs, or devices without GApps.
-* **Invidious / Lightweight Backend Support:** Prevents heavy, modern JavaScript execution engines from choking legacy CPUs.
+Modern YouTube may not work reliably in Android 4.4's old WebView. Sign-in, video playback, codecs, TLS support, and website compatibility depend on the device firmware and YouTube's current website. Smooth playback or a specific RAM footprint cannot be guaranteed without testing on the target device. The app does not currently implement a separate Invidious backend.
 
----
+## Build
 
-## 🛠️ Repository Architecture
+Push to `main`, `master`, or `legacy-kitkat-optimization`, or run the workflow manually from GitHub Actions. Download the `YouTube-KitKat-512MB-APK` artifact from a successful workflow run.
 
-```text
-yt-legacy-wrapper/
-├── .github/
-│   └── workflows/
-│       └── build.yml          # Automated CI/CD compilation pipeline
-├── app/
-│   ├── build.gradle           # Target API 19 (KitKat) configurations
-│   └── src/
-│       └── main/
-│           ├── AndroidManifest.xml
-│           └── java/com/yt/wrapper/
-│               └── MainActivity.java   # Optimized WebKit view engine
-├── build.gradle               # Root build engine settings
-├── README.md
-└── settings.gradle
+The project uses Android Gradle Plugin 4.1.3, Gradle 6.8.3, and JDK 11. It compiles against API 30 while retaining API 19 as the minimum supported Android version.
