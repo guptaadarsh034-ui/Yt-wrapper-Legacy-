@@ -3,7 +3,6 @@ package com.yt.wrapper;
 import android.app.Activity;
 import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.view.KeyEvent;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -18,14 +17,22 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         webView = new WebView(this);
+
+        // Hardware acceleration is enabled in the manifest. Do not force an
+        // extra hardware layer: on 512 MB devices its off-screen texture can
+        // consume scarce graphics memory and make scrolling less stable.
+        webView.setLayerType(View.LAYER_TYPE_NONE, null);
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setFocusable(true);
         webView.setFocusableInTouchMode(true);
+        webView.setDrawingCacheEnabled(false);
         setContentView(webView);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
-        // YouTube's mobile site uses local storage for parts of its UI.
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(false);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
@@ -34,8 +41,12 @@ public class MainActivity extends Activity {
         settings.setDisplayZoomControls(false);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
-        // Keep the system WebView's own user agent. Faking a newer browser
-        // can make legacy WebKit fail on features it does not implement.
+        settings.setLoadsImagesAutomatically(true);
+        settings.setSupportMultipleWindows(false);
+
+        // Legacy hint available on API 19. It is deprecated on newer Android
+        // versions and may be ignored by some WebView implementations.
+        settings.setRenderPriority(WebSettings.RenderPriority.HIGH);
 
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
@@ -46,14 +57,19 @@ public class MainActivity extends Activity {
 
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // Keep navigation inside the app and preserve WebView history.
-                view.loadUrl(url);
-                return true;
+                // Keep ordinary web navigation in the same WebView.
+                if (url != null && (url.startsWith("https://") || url.startsWith("http://"))) {
+                    view.loadUrl(url);
+                    return true;
+                }
+                return false;
             }
         });
 
         if (savedInstanceState != null) {
-            webView.restoreState(savedInstanceState);
+            if (webView.restoreState(savedInstanceState) == null) {
+                webView.loadUrl("https://m.youtube.com/");
+            }
         } else {
             webView.loadUrl("https://m.youtube.com/");
         }
@@ -99,6 +115,7 @@ public class MainActivity extends Activity {
             webView.loadUrl("about:blank");
             webView.setWebChromeClient(null);
             webView.setWebViewClient(null);
+            webView.removeAllViews();
             webView.destroy();
             webView = null;
         }
