@@ -2,7 +2,7 @@ name: Build Android 4.4 APK
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main", "master", "legacy-kitkat-optimization" ]
   workflow_dispatch:
 
 jobs:
@@ -24,10 +24,10 @@ jobs:
       with:
         gradle-version: '6.8.3'
 
-    - name: Build Debug APK
+    - name: Build debug APK
       run: gradle assembleDebug
 
-    - name: Upload APK Artifact
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: YouTube-KitKat-512MB-APK
