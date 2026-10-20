@@ -1,24 +1,22 @@
-# YT Legacy Wrapper
+# YT Legacy
 
-A small Android WebView wrapper intended for Android 4.4 (API 19) devices, including low-memory phones. This is an experimental compatibility project, not a port of Google's proprietary YouTube APK.
+A small Android app for Android 4.4 (API 19) and low-memory devices. It has a lightweight direct-MP4 downloader and a separate YouTube mobile-site browser.
 
-## Smoothness and low-memory tuning
+## Features
 
-- Hardware acceleration is enabled at both application and activity level in the manifest.
-- Does not force a separate hardware layer for the WebView; extra off-screen textures can increase graphics-memory pressure on 512 MB devices.
-- Hides scrollbars and disables overscroll effects to reduce visual clutter and edge-effect work.
-- Disables the WebView drawing cache and avoids extra runtime libraries.
-- Uses the normal WebView cache; does not clear it on every launch.
-- Uses the API 19 WebView render-priority hint where supported. Newer WebView implementations may ignore this deprecated hint.
-- Does not request `largeHeap`; it keeps DOM storage for site compatibility and disables the legacy WebView database API.
-- Handles back navigation, pause/resume, state restoration, and WebView cleanup.
+- Downloads direct HTTP/HTTPS MP4 file URLs using Android's built-in DownloadManager.
+- Shows a local download list with current status and cancel controls.
+- Uses Android's system download notification for progress/completion.
+- Saves downloads to the public `Movies/YT Legacy` directory so media scanners, Gallery apps, and built-in video players can discover them.
+- Includes a separate browser that opens `https://m.youtube.com/`.
+- Keeps hardware acceleration enabled and avoids additional runtime libraries or a forced WebView hardware layer.
 
-## Important limitations
+## Important download limitation
 
-Modern YouTube may not work reliably in Android 4.4's old WebView. Sign-in, video playback, codecs, TLS support, website compatibility, and frame rate depend on device firmware, GPU drivers, memory pressure, and YouTube's current website. These settings are tuning, not a guarantee of a specific frame rate or RAM footprint; real-device testing is required. The app does not currently implement a separate Invidious backend.
+This is **not** a YouTube stream extractor. A YouTube watch-page URL (including `m.youtube.com`) is not a direct MP4 download URL, and this app deliberately does not extract or bypass protected/streaming YouTube URLs. Use direct MP4 links for videos you own or are authorized to download. The built-in Gallery/player can play the file only if the downloaded MP4 uses codecs supported by the device (commonly H.264 video and AAC audio).
 
 ## Build
 
-Push to `main`, `master`, or `legacy-kitkat-optimization`, or run the workflow manually from GitHub Actions. Download the `YouTube-KitKat-512MB-APK` artifact from a successful workflow run.
+Push to `main`, `master`, or `legacy-kitkat-optimization`, or run the GitHub Actions workflow manually. Download the `YouTube-KitKat-512MB-APK` artifact from a successful run.
 
-The project uses Android Gradle Plugin 4.1.3, Gradle 6.8.3, and JDK 11. It compiles against API 30 while retaining API 19 as the minimum supported Android version.
+The project compiles against API 30 with minimum Android API 19, using Android Gradle Plugin 4.1.3, Gradle 6.8.3, and JDK 11.
