@@ -1,86 +1,70 @@
 package com.yt.wrapper;
 
 import android.app.Activity;
-import android.os.Build;
+import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
-import android.view.WindowManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.webkit.WebChromeClient;
 
 public class MainActivity extends Activity {
-
     private WebView webView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // --- HARDWARE ACCELERATION STEP 1: Window Level GPU Rendering ---
-        getWindow().setFlags(
-            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
-            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
-        );
-
         webView = new WebView(this);
+        webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
+        webView.setFocusable(true);
+        webView.setFocusableInTouchMode(true);
         setContentView(webView);
 
-        // --- HARDWARE ACCELERATION STEP 2: View Level GPU Layer ---
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
-        }
-
-        webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
-
         WebSettings settings = webView.getSettings();
-        
         settings.setJavaScriptEnabled(true);
+        // YouTube's mobile site uses local storage for parts of its UI.
         settings.setDomStorageEnabled(true);
-        
-        // Disable heavy caching to conserve 512MB RAM
-        settings.setAppCacheEnabled(false);
-        settings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         settings.setDatabaseEnabled(false);
-        
-        // --- HARDWARE ACCELERATION STEP 3: Media & Render Prioritization ---
-        settings.setRenderPriority(WebSettings.RenderPriority.HIGH);
-        settings.setPluginState(WebSettings.PluginState.ON);
-        
-        // Force desktop/mobile layout hardware viewport
+        settings.setCacheMode(WebSettings.LOAD_DEFAULT);
+        settings.setSupportZoom(false);
+        settings.setBuiltInZoomControls(false);
+        settings.setDisplayZoomControls(false);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
+        // Keep the system WebView's own user agent. Faking a newer browser
+        // can make legacy WebKit fail on features it does not implement.
 
-        // KitKat-optimized User Agent (serves lightweight UI that GPUs can composite fast)
-        settings.setUserAgentString("Mozilla/5.0 (Linux; U; Android 4.4.2; en-us; LGMS323 Build/KOT49I.MS32310c) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/30.0.0.0 Mobile Safari/537.36");
-
+        webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override
+            public void onPageStarted(WebView view, String url, Bitmap favicon) {
+                super.onPageStarted(view, url, favicon);
+            }
+
+            @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // Keep navigation inside the app and preserve WebView history.
                 view.loadUrl(url);
                 return true;
             }
         });
 
-        // --- HARDWARE ACCELERATION STEP 4: Full WebChromeClient for GPU Video Decoding ---
-        webView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public View getVideoLoadingProgressView() {
-                return super.getVideoLoadingProgressView();
-            }
-        });
-
-        webView.loadUrl("https://m.youtube.com");
+        if (savedInstanceState != null) {
+            webView.restoreState(savedInstanceState);
+        } else {
+            webView.loadUrl("https://m.youtube.com/");
+        }
     }
 
     @Override
     protected void onPause() {
-        super.onPause();
         if (webView != null) {
             webView.onPause();
-            webView.pauseTimers();
         }
+        super.onPause();
     }
 
     @Override
@@ -88,8 +72,15 @@ public class MainActivity extends Activity {
         super.onResume();
         if (webView != null) {
             webView.onResume();
-            webView.resumeTimers();
         }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        if (webView != null) {
+            webView.saveState(outState);
+        }
+        super.onSaveInstanceState(outState);
     }
 
     @Override
@@ -99,5 +90,18 @@ public class MainActivity extends Activity {
         } else {
             super.onBackPressed();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (webView != null) {
+            webView.stopLoading();
+            webView.loadUrl("about:blank");
+            webView.setWebChromeClient(null);
+            webView.setWebViewClient(null);
+            webView.destroy();
+            webView = null;
+        }
+        super.onDestroy();
     }
 }
