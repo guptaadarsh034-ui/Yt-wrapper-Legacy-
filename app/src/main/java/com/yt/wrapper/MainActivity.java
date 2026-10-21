@@ -321,8 +321,14 @@ public class MainActivity extends Activity {
                     int totalCol = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
                     if (titleCol >= 0) snapshot.append(cursor.getString(titleCol));
                     if (statusCol >= 0) snapshot.append('|').append(cursor.getInt(statusCol));
-                    if (downloadedCol >= 0) snapshot.append('|').append(cursor.getLong(downloadedCol));
-                    if (totalCol >= 0) snapshot.append('|').append(cursor.getLong(totalCol));
+                    if (downloadedCol >= 0 && totalCol >= 0) {
+                        long downloaded = cursor.getLong(downloadedCol);
+                        long total = cursor.getLong(totalCol);
+                        int percent = total > 0 ? (int) Math.min(100, (downloaded * 100L) / total) : 0;
+                        // The visible UI only shows whole percentages, so byte-level
+                        // changes do not need to trigger a redraw.
+                        snapshot.append('|').append(percent);
+                    }
                 } else {
                     snapshot.append("missing");
                 }
