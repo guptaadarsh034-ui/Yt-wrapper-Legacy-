@@ -30,9 +30,16 @@ jobs:
     - name: Report APK size
       shell: bash
       run: |
-        APK="app/build/outputs/apk/release/app-release.apk"
+        APK="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' -print -quit)"
+        if [ -z "$APK" ] || [ ! -f "$APK" ]; then
+          echo "ERROR: Gradle succeeded but no APK was found under app/build/outputs/apk/release/"
+          find app/build/outputs -maxdepth 5 -type f -print || true
+          exit 1
+        fi
         BYTES="$(stat -c%s "$APK")"
-        echo "Optimized release APK: $BYTES bytes ($(awk "BEGIN {printf \"%.2f\", $BYTES/1024/1024}") MiB)"
+        MIB="$(awk -v bytes="$BYTES" 'BEGIN {printf "%.2f", bytes/1024/1024}')"
+        echo "Optimized release APK: $APK"
+        echo "APK size: $BYTES bytes ($MIB MiB)"
         if [ "$BYTES" -le 1048576 ]; then
           echo "APK is within the 1 MiB target."
         else
@@ -43,4 +50,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: YouTube-KitKat-512MB-Optimized-Release
-        path: app/build/outputs/apk/release/app-release.apk
+        path: app/build/outputs/apk/release/*.apk
