@@ -38,7 +38,8 @@ public class BrowserActivity extends Activity {
         settings.setDisplayZoomControls(false);
         settings.setUseWideViewPort(true);
         settings.setLoadWithOverviewMode(true);
-        settings.setRenderPriority(WebSettings.RenderPriority.HIGH);
+        // Keep the platform WebView renderer in control; RenderPriority is deprecated
+        // and has no useful effect on modern WebView implementations.
 
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
@@ -84,6 +85,20 @@ public class BrowserActivity extends Activity {
     @Override public void onBackPressed() {
         if (webView != null && webView.canGoBack()) webView.goBack();
         else super.onBackPressed();
+    }
+
+    @Override public void onLowMemory() {
+        // KitKat WebView can hold substantial renderer memory. Ask it to release
+        // reclaimable memory when Android reports pressure, without clearing its cache.
+        if (webView != null) webView.freeMemory();
+        super.onLowMemory();
+    }
+
+    @Override public void onTrimMemory(int level) {
+        if (level >= TRIM_MEMORY_RUNNING_LOW && webView != null) {
+            webView.freeMemory();
+        }
+        super.onTrimMemory(level);
     }
 
     @Override protected void onDestroy() {
