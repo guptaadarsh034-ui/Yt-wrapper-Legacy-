@@ -24,11 +24,23 @@ jobs:
       with:
         gradle-version: '6.8.3'
 
-    - name: Build debug APK
-      run: gradle assembleDebug
+    - name: Build optimized release APK
+      run: gradle assembleRelease
 
-    - name: Upload APK artifact
+    - name: Report APK size
+      shell: bash
+      run: |
+        APK="app/build/outputs/apk/release/app-release.apk"
+        BYTES="$(stat -c%s "$APK")"
+        echo "Optimized release APK: $BYTES bytes ($(awk "BEGIN {printf \"%.2f\", $BYTES/1024/1024}") MiB)"
+        if [ "$BYTES" -le 1048576 ]; then
+          echo "APK is within the 1 MiB target."
+        else
+          echo "APK is above 1 MiB; see size report. No build failure because device compatibility is more important than an arbitrary cutoff."
+        fi
+
+    - name: Upload optimized release APK
       uses: actions/upload-artifact@v4
       with:
-        name: YouTube-KitKat-512MB-APK
-        path: app/build/outputs/apk/debug/app-debug.apk
+        name: YouTube-KitKat-512MB-Optimized-Release
+        path: app/build/outputs/apk/release/app-release.apk
