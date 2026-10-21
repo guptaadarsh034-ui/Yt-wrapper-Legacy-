@@ -31,6 +31,7 @@ public class MainActivity extends Activity {
     private LinearLayout downloadList;
     private android.os.Handler handler = new android.os.Handler();
     private Runnable refreshTask;
+    private boolean activityResumed;
     private final List<Long> downloadIds = new ArrayList<Long>();
 
     @Override
@@ -43,10 +44,9 @@ public class MainActivity extends Activity {
         refreshTask = new Runnable() {
             @Override public void run() {
                 refreshDownloads();
-                handler.postDelayed(this, 1800);
+                if (activityResumed) handler.postDelayed(this, 4000);
             }
         };
-        handler.postDelayed(refreshTask, 1800);
     }
 
     private void buildUi() {
@@ -330,7 +330,23 @@ public class MainActivity extends Activity {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show();
     }
 
+    @Override protected void onResume() {
+        super.onResume();
+        activityResumed = true;
+        if (refreshTask != null) {
+            handler.removeCallbacks(refreshTask);
+            handler.postDelayed(refreshTask, 4000);
+        }
+    }
+
+    @Override protected void onPause() {
+        activityResumed = false;
+        if (refreshTask != null) handler.removeCallbacks(refreshTask);
+        super.onPause();
+    }
+
     @Override protected void onDestroy() {
+        activityResumed = false;
         if (refreshTask != null) handler.removeCallbacks(refreshTask);
         super.onDestroy();
     }
