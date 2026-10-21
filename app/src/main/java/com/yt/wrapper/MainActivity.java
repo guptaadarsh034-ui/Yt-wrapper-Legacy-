@@ -32,6 +32,7 @@ public class MainActivity extends Activity {
     private android.os.Handler handler = new android.os.Handler();
     private Runnable refreshTask;
     private boolean activityResumed;
+    private String lastDownloadsSnapshot;
     private final List<Long> downloadIds = new ArrayList<Long>();
 
     @Override
@@ -219,6 +220,12 @@ public class MainActivity extends Activity {
 
     private void refreshDownloads() {
         if (downloadList == null) return;
+
+        // Avoid rebuilding the entire view tree on every poll when nothing changed.
+        // This reduces flicker, layout work and short-lived allocations on low-RAM phones.
+        String snapshot = getDownloadsSnapshot();
+        if (snapshot.equals(lastDownloadsSnapshot)) return;
+        lastDownloadsSnapshot = snapshot;
         downloadList.removeAllViews();
         if (downloadIds.isEmpty()) {
             TextView empty = new TextView(this);
@@ -297,6 +304,36 @@ public class MainActivity extends Activity {
                 });
             }
         }
+    }
+
+    private String getDownloadsSnapshot() {
+        StringBuilder snapshot = new StringBuilder();
+        for (int i = downloadIds.size() - 1; i >= 0; i--) {
+            long id = downloadIds.get(i).longValue();
+            Cursor cursor = null;
+            snapshot.append(id).append(':');
+            try {
+                cursor = downloadManager.query(new DownloadManager.Query().setFilterById(id));
+                if (cursor != null && cursor.moveToFirst()) {
+                    int titleCol = cursor.getColumnIndex(DownloadManager.COLUMN_TITLE);
+                    int statusCol = cursor.getColumnIndex(DownloadManager.COLUMN_STATUS);
+                    int downloadedCol = cursor.getColumnIndex(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR);
+                    int totalCol = cursor.getColumnIndex(DownloadManager.COLUMN_TOTAL_SIZE_BYTES);
+                    if (titleCol >= 0) snapshot.append(cursor.getString(titleCol));
+                    if (statusCol >= 0) snapshot.append('|').append(cursor.getInt(statusCol));
+                    if (downloadedCol >= 0) snapshot.append('|').append(cursor.getLong(downloadedCol));
+                    if (totalCol >= 0) snapshot.append('|').append(cursor.getLong(totalCol));
+                } else {
+                    snapshot.append("missing");
+                }
+            } catch (Exception ignored) {
+                snapshot.append("unavailable");
+            } finally {
+                if (cursor != null) cursor.close();
+            }
+            snapshot.append(';');
+        }
+        return snapshot.toString();
     }
 
     private void loadIds() {
