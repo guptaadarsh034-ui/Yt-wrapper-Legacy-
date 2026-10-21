@@ -43,11 +43,13 @@ public class BrowserActivity extends Activity {
         webView.setWebChromeClient(new WebChromeClient());
         webView.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                // Let WebView handle normal web navigation itself. Calling loadUrl()
+                // here and returning true can trigger an unnecessary second navigation
+                // on older WebView versions, causing extra network and rendering work.
                 if (url != null && (url.startsWith("https://") || url.startsWith("http://"))) {
-                    view.loadUrl(url);
-                    return true;
+                    return false;
                 }
-                return false;
+                return true;
             }
         });
 
