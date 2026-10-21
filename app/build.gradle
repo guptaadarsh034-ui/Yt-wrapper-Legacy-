@@ -24,6 +24,12 @@ android {
         }
     }
 
+    lintOptions {
+        // This app intentionally targets API 19 to preserve Android 4.4 behavior.
+        // It is distributed as a legacy sideload APK, not through Google Play.
+        disable 'ExpiredTargetSdkVersion'
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
