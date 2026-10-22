@@ -127,7 +127,14 @@ public class BrowserActivity extends Activity {
         if (savedInstanceState != null && webView.restoreState(savedInstanceState) != null) {
             // Restored the existing YouTube page.
         } else {
-            webView.loadUrl("https://m.youtube.com/");
+            String requestedUrl = getIntent().getStringExtra("start_url");
+            // Only accept the built-in Shorts entry point; arbitrary external URLs
+            // are deliberately not accepted by this lightweight browser.
+            if ("shorts".equals(requestedUrl)) {
+                webView.loadUrl("https://m.youtube.com/shorts/");
+            } else {
+                webView.loadUrl("https://m.youtube.com/");
+            }
         }
     }
 
