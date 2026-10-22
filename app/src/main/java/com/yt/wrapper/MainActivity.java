@@ -122,6 +122,19 @@ public class MainActivity extends Activity {
             }
         });
 
+        Button shorts = new Button(this);
+        shorts.setText("OPEN SHORTS FEED");
+        LinearLayout.LayoutParams shortsParams = params(-1, dp(48));
+        shortsParams.topMargin = dp(4);
+        root.addView(shorts, shortsParams);
+        shorts.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) {
+                android.content.Intent intent = new android.content.Intent(MainActivity.this, BrowserActivity.class);
+                intent.putExtra("start_url", "shorts");
+                startActivity(intent);
+            }
+        });
+
         TextView note = new TextView(this);
         note.setText("Direct, downloadable MP4 links only. YouTube page links and protected/streaming URLs are not extracted. Downloads are saved in Movies/YT Legacy so your Gallery or built-in video player can find them.");
         note.setTextSize(12);
