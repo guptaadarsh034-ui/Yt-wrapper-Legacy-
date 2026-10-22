@@ -25,6 +25,9 @@ public class BrowserActivity extends Activity {
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
+        // Android 4.4 supports this setting (API 17+). Let the site control its
+        // normal in-page video playback instead of adding a WebView gesture gate.
+        settings.setMediaPlaybackRequiresUserGesture(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setSupportMultipleWindows(false);
         settings.setDomStorageEnabled(true);
