@@ -1,22 +1,40 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 19
+    // Compile with an available SDK while keeping Android 4.4 as the minimum.
+    compileSdkVersion 30
     buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "com.yt.wrapper"
-        minSdkVersion 19   // Android 4.4 KitKat
+        minSdkVersion 19
         targetSdkVersion 19
-        versionCode 1
-        versionName "1.0"
+        versionCode 7
+        versionName "1.6"
     }
 
     buildTypes {
         release {
+            // Use the standard debug key so CI produces an installable sideload APK.
+            // For personal/legacy testing only; do not publish this signing identity.
+            signingConfig signingConfigs.debug
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
         }
+        debug {
+            minifyEnabled false
+        }
+    }
+
+    lintOptions {
+        // This app intentionally targets API 19 to preserve Android 4.4 behavior.
+        // It is distributed as a legacy sideload APK, not through Google Play.
+        disable 'ExpiredTargetSdkVersion'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 }

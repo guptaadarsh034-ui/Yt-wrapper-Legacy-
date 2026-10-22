@@ -1,35 +1,26 @@
-# YT Legacy Wrapper
+# YT Legacy
 
-A lightweight, high-performance YouTube wrapper built specifically for **Android 4.4 (KitKat)** devices with **512 MB RAM**.
+A small Android app for Android 4.4 (API 19) and low-memory devices. It has a lightweight direct-MP4 downloader and a separate YouTube mobile-site browser.
 
-Modern YouTube apps and standard WebViews cause severe frame drops, stuttering, and Out-Of-Memory (OOM) crashes on low-spec legacy hardware. **YT Legacy Wrapper** addresses this by using a stripped-down client rendering loop, hardware-accelerated WebKit views, and aggressive RAM management to deliver a smooth, 60fps playback experience reminiscent of YouTube on legacy systems.
+## Features
 
----
+- Downloads direct HTTP/HTTPS MP4 file URLs using Android's built-in DownloadManager.
+- Shows a local download list with current status and cancel controls.
+- Uses Android's system download notification for progress/completion.
+- Saves downloads to the public `Movies/YT Legacy` directory so media scanners, Gallery apps, and built-in video players can discover them.
+- Includes a separate browser that opens `https://m.youtube.com/`.
+- Keeps hardware acceleration enabled and avoids additional runtime libraries or a forced WebView hardware layer.
 
-## 🌟 Key Features
+## Important download limitation
 
-* **Low RAM Footprint:** Operates strictly within **~50MB – 80MB of RAM** (designed specifically for 512MB RAM constraints).
-* **Hardware Accelerated:** Forces GPU-based WebKit rendering for smooth UI transitions and scrolling.
-* **Auto Build via GitHub Actions:** Compiles and generates the APK automatically every time you push code.
-* **Zero Google Play Services Dependency:** Runs smoothly on AOSP, custom ROMs, or devices without GApps.
-* **Invidious / Lightweight Backend Support:** Prevents heavy, modern JavaScript execution engines from choking legacy CPUs.
+This is **not** a YouTube stream extractor. A YouTube watch-page URL (including `m.youtube.com`) is not a direct MP4 download URL, and this app deliberately does not extract or bypass protected/streaming YouTube URLs. Use direct MP4 links for videos you own or are authorized to download. The built-in Gallery/player can play the file only if the downloaded MP4 uses codecs supported by the device (commonly H.264 video and AAC audio).
 
----
+## Size and compatibility
 
-## 🛠️ Repository Architecture
+The release build enables code shrinking and resource shrinking. The project intentionally avoids third-party libraries and keeps the downloader UI native for lower memory use. An APK near 1 MiB is a goal, not a guarantee: Android framework compatibility, WebView access to `m.youtube.com`, and the remaining app code all have a size cost. Android APKs are executable packages, not HTML files. The YouTube screen uses the Android 4.4 system WebView; the downloader screen uses native Java views to reduce runtime overhead.
 
-```text
-yt-legacy-wrapper/
-├── .github/
-│   └── workflows/
-│       └── build.yml          # Automated CI/CD compilation pipeline
-├── app/
-│   ├── build.gradle           # Target API 19 (KitKat) configurations
-│   └── src/
-│       └── main/
-│           ├── AndroidManifest.xml
-│           └── java/com/yt/wrapper/
-│               └── MainActivity.java   # Optimized WebKit view engine
-├── build.gradle               # Root build engine settings
-├── README.md
-└── settings.gradle
+## Build
+
+Push to `main`, `master`, or `legacy-kitkat-optimization`, or run the GitHub Actions workflow manually. Download the `YouTube-KitKat-512MB-Optimized-Release` artifact from a successful run. The workflow builds the minified release variant and reports its APK size against a 1 MiB target; if the app cannot fit without sacrificing functionality or compatibility, it reports that rather than failing the build.
+
+The project compiles against API 30 with minimum Android API 19, using Android Gradle Plugin 4.1.3, Gradle 6.8.3, and JDK 11.
