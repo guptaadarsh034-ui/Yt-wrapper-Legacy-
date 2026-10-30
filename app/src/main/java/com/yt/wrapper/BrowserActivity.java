@@ -17,7 +17,8 @@ import android.widget.ProgressBar;
 
 public class BrowserActivity extends Activity {
     private WebView webView;
-    private FrameLayout root;
+    private android.widget.LinearLayout root;
+    private FrameLayout webContainer;
     private ProgressBar pageProgress;
     private View fullscreenView;
     private WebChromeClient.CustomViewCallback fullscreenCallback;
@@ -27,8 +28,39 @@ public class BrowserActivity extends Activity {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        root = new FrameLayout(this);
+        root = new android.widget.LinearLayout(this);
+        root.setOrientation(android.widget.LinearLayout.VERTICAL);
         root.setBackgroundColor(Color.BLACK);
+
+        // Compact native navigation controls remain usable even if YouTube's
+        // old KitKat-compatible page layout changes. No extra libraries needed.
+        android.widget.LinearLayout toolbar = new android.widget.LinearLayout(this);
+        toolbar.setOrientation(android.widget.LinearLayout.HORIZONTAL);
+        toolbar.setGravity(Gravity.CENTER_VERTICAL);
+        toolbar.setBackgroundColor(Color.rgb(24, 27, 32));
+        root.addView(toolbar, new android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(44)));
+        addToolButton(toolbar, "BACK", new Runnable() {
+            @Override public void run() { if (webView != null && webView.canGoBack()) webView.goBack(); }
+        });
+        addToolButton(toolbar, "HOME", new Runnable() {
+            @Override public void run() { if (webView != null) webView.loadUrl("https://m.youtube.com/"); }
+        });
+        addToolButton(toolbar, "SHORTS", new Runnable() {
+            @Override public void run() { if (webView != null) webView.loadUrl("https://m.youtube.com/shorts/"); }
+        });
+        addToolButton(toolbar, "RELOAD", new Runnable() {
+            @Override public void run() { if (webView != null) webView.reload(); }
+        });
+        addToolButton(toolbar, "NEXT", new Runnable() {
+            @Override public void run() { if (webView != null && webView.canGoForward()) webView.goForward(); }
+        });
+
+        webContainer = new FrameLayout(this);
+        webContainer.setBackgroundColor(Color.BLACK);
+        root.addView(webContainer, new android.widget.LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f));
+
         webView = new WebView(this);
         webView.setLayerType(View.LAYER_TYPE_NONE, null);
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
@@ -36,7 +68,7 @@ public class BrowserActivity extends Activity {
         webView.setHorizontalScrollBarEnabled(false);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setDrawingCacheEnabled(false);
-        root.addView(webView, new FrameLayout.LayoutParams(
+        webContainer.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
         pageProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
@@ -45,7 +77,7 @@ public class BrowserActivity extends Activity {
         pageProgress.setVisibility(View.GONE);
         FrameLayout.LayoutParams progressParams = new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(3), Gravity.TOP);
-        root.addView(pageProgress, progressParams);
+        webContainer.addView(pageProgress, progressParams);
         setContentView(root);
 
         WebSettings settings = webView.getSettings();
@@ -136,6 +168,24 @@ public class BrowserActivity extends Activity {
                 webView.loadUrl("https://m.youtube.com/");
             }
         }
+    }
+
+    private void addToolButton(android.widget.LinearLayout toolbar, String label, final Runnable action) {
+        android.widget.TextView button = new android.widget.TextView(this);
+        button.setText(label);
+        button.setTextColor(Color.WHITE);
+        button.setTextSize(10);
+        button.setGravity(Gravity.CENTER);
+        button.setSingleLine(true);
+        button.setPadding(dp(2), 0, dp(2), 0);
+        button.setBackgroundColor(Color.rgb(35, 40, 48));
+        android.widget.LinearLayout.LayoutParams params =
+                new android.widget.LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f);
+        params.setMargins(dp(1), dp(2), dp(1), dp(2));
+        toolbar.addView(button, params);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { action.run(); }
+        });
     }
 
     private int dp(int value) {
